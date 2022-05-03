@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@Slf4j
 public class InventoryServiceApplication {
 
 	public static void main(String[] args) {

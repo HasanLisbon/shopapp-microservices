@@ -8,7 +8,10 @@ import com.mahmudul.orderservice.model.Order;
 import com.mahmudul.orderservice.model.OrderLineItems;
 import com.mahmudul.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +20,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Testcontainers
 @AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class OrderServiceApplicationTests {
 	@Autowired
 	private OrderRepository orderRepository;
@@ -40,6 +45,9 @@ class OrderServiceApplicationTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+
+
 
 	@Container
 	public static PostgreSQLContainer postgresDB = new PostgreSQLContainer("postgres:14.2")
@@ -56,17 +64,25 @@ class OrderServiceApplicationTests {
 	}
 
 	@Test
-	void shouldPlaceOrder() throws Exception {
+	void shouldPlaceOrder() {
 		List<OrderLineItems> orderLineItems = getOrderRequest();
 		Order order = Order.builder()
 						.orderNumber(UUID.randomUUID().toString())
 						.orderLineItemsList(orderLineItems)
 						.build();
-		String orderRequestString = objectMapper.writeValueAsString(order);
-		mockMvc.perform(MockMvcRequestBuilders.post("/api/order")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(orderRequestString))
-				.andExpect(status().isCreated());
+		String orderRequestString = null;
+		try {
+			orderRequestString = objectMapper.writeValueAsString(order);
+
+			mockMvc.perform(MockMvcRequestBuilders.post("/api/order")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content(orderRequestString))
+					.andExpect(status().isCreated());
+		}catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 		Assertions.assertEquals(1, orderRepository.findAll().size());
 	}
 
